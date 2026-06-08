@@ -13,12 +13,9 @@ from datetime import UTC, datetime
 from src.config import Config
 from src.db import Database
 from src.llm import get_provider
+from src.prompt_manager import PromptManager
+from src.registry import SOURCE_REGISTRY
 from src.sources.base import SourceResult
-from src.sources.email import EmailSource
-from src.sources.github import GitHubSource
-from src.sources.gitlab import GitLabSource
-from src.sources.jira import JiraSource
-from src.sources.telegram import TelegramSource
 
 log = logging.getLogger(__name__)
 
@@ -48,27 +45,18 @@ class DigestResult:
 async def run_all(config: Config, db: Database) -> DigestResult:
     """Run all configured sources concurrently."""
     llm = get_provider(config.llm)
+    prompt_manager = PromptManager(config.prompts_dir)
     tasks: list[asyncio.Task[SourceResult]] = []
 
-    for acc in config.email_accounts:
-        source = EmailSource(acc, llm, db, dry_run=config.dry_run)
-        tasks.append(asyncio.create_task(source.run()))
-
-    for inst in config.gitlab_instances:
-        source = GitLabSource(inst, llm, db, dry_run=config.dry_run)
-        tasks.append(asyncio.create_task(source.run()))
-
-    for acc in config.github_accounts:
-        source = GitHubSource(acc, llm, db, dry_run=config.dry_run)
-        tasks.append(asyncio.create_task(source.run()))
-
-    for acc in config.telegram_accounts:
-        source = TelegramSource(acc, llm, db, dry_run=config.dry_run)
-        tasks.append(asyncio.create_task(source.run()))
-
-    for inst in config.jira_instances:
-        source = JiraSource(inst, llm, db, dry_run=config.dry_run)
-        tasks.append(asyncio.create_task(source.run()))
+    for _entry_name, entry in SOURCE_REGISTRY:
+        instances = getattr(config, entry.config_field, [])
+        for inst in instances:
+            source = entry.source_class(
+                inst, llm, db,
+                prompt_manager=prompt_manager,
+                dry_run=config.dry_run,
+            )
+            tasks.append(asyncio.create_task(source.run()))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 

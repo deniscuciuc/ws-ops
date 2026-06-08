@@ -68,39 +68,49 @@ alias wso=ws-ops
 - **[uv](https://github.com/astral-sh/uv)** (fast Python package manager)
 - **Ollama** running locally, or API keys for a remote LLM provider
 
-### Setup
+### Global install (recommended)
 
 ```bash
-# Clone and enter
-git clone https://github.com/deniscuciuc/ws-ops.git
-cd ws-ops
+# Install directly from Git
+uv tool install git+https://github.com/deniscuciuc/ws-ops.git
 
-# Install dependencies and create virtualenv
-uv sync
-
-# Copy and configure
-cp .env.example .env
-$EDITOR .env
-
-# Install as a global CLI tool
-uv tool install .
+# Create config directory and populate
+mkdir -p ~/.config/ws-ops
+cp .env.example ~/.config/ws-ops/.env
+$EDITOR ~/.config/ws-ops/.env
 
 # Verify setup
 ws-ops config-check
 ```
 
+### From source (development)
+
+```bash
+git clone https://github.com/deniscuciuc/ws-ops.git
+cd ws-ops
+uv sync
+cp .env.example .env
+$EDITOR .env
+uv run ws-ops config-check
+```
+
 ### Quick Start
 
-1. Configure at least one source in `.env` (see examples in `.env.example`)
+1. Configure at least one source in `.env` (place in `~/.config/ws-ops/` for global install, or `$PWD/.env` for local dev)
 2. Run `ws-ops config-check` to verify all connections
 3. Run `ws-ops morning` for your first digest
 4. Set up the Telegram bot for push notifications (optional)
+
+> **Path resolution**: `ws-ops` uses [`platformdirs`](https://github.com/platformdirs/platformdirs) for cross-platform defaults.
+> On Linux, config lives in `~/.config/ws-ops/` and data in `~/.local/share/ws-ops/`.
+> On macOS: `~/Library/Application Support/ws-ops/`.
 
 ---
 
 ## Configuration
 
 Configuration lives in `.env` or environment variables with the `WS_OPS_` prefix.
+The `.env` file is auto-detected: `WS_OPS_ENV_FILE` override → `~/.config/ws-ops/.env` → `$PWD/.env`.
 
 ```dotenv
 # LLM provider: ollama | openai | anthropic

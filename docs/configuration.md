@@ -65,5 +65,11 @@ WS_OPS_JIRA_INSTANCES='[{"name": "myorg", "server": "https://myorg.atlassian.net
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WS_OPS_DRY_RUN` | `false` | Preview actions without executing |
-| `WS_OPS_DB_PATH` | `~/.ws-ops/ws_ops.db` | SQLite database path |
-| `WS_OPS_PROMPTS_DIR` | `./prompts` | Override prompts directory |
+| `WS_OPS_DB_PATH` | `~/.local/share/ws-ops/ws_ops.db`¹ | SQLite database path |
+| `WS_OPS_PROMPTS_DIR` | `~/.local/share/ws-ops/prompts`¹ | Override prompts directory |
+| `WS_OPS_OUTPUT_DIR` | `~/.local/share/ws-ops/output`¹ | Output directory |
+| `WS_OPS_ENV_FILE` | auto-detected² | Explicit path to `.env` file |
+
+¹ Platform-specific: shown for Linux. Uses `platformdirs` — macOS uses `~/Library/Application Support/ws-ops/`, Windows uses `%LOCALAPPDATA%/ws-ops/`.
+
+² Resolution order: `WS_OPS_ENV_FILE` override → `XDG_CONFIG_HOME/ws-ops/.env` → `$PWD/.env` → package root `.env`.

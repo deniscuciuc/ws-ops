@@ -6,7 +6,6 @@ build/
 .venv/
 .env
 *.session
-~/.ws-ops/
 .ruff_cache/
 .pytest_cache/
 .vscode/

@@ -33,7 +33,7 @@ WS_OPS_TELEGRAM_ACCOUNTS='[{
   "name": "personal",
   "api_id": 12345678,
   "api_hash": "abc...",
-  "session_file": "~/.ws-ops/tg_personal.session",
+  "session_file": null,
   "watch_chats": ["team_chat", -1001234567890],
   "fetch_dms": false,
   "unread_only": true,

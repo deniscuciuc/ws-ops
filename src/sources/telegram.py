@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 
+import platformdirs
 from telethon import TelegramClient
 from telethon.errors import RPCError
 
@@ -25,12 +27,19 @@ class TelegramSource(Source[TelegramAccountConfig]):
     def source_name(self) -> str:
         return "telegram"
 
+    def _resolve_session_file(self) -> str:
+        """Return session_file from config or generate a default in the data dir."""
+        if self.config.session_file:
+            return str(Path(self.config.session_file).expanduser().resolve())
+        data_dir = Path(platformdirs.user_data_dir("ws-ops", ensure_exists=True))
+        return str(data_dir / f"tg_{self.config.name}.session")
+
     async def fetch(self) -> list[SourceItem]:
         items: list[SourceItem] = []
         config = self.config
 
         client = TelegramClient(
-            session=config.session_file,
+            session=self._resolve_session_file(),
             api_id=config.api_id,
             api_hash=config.api_hash.get_secret_value(),
         )

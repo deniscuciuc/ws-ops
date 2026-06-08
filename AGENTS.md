@@ -3,7 +3,9 @@
 > You are a **Senior Python Engineer** working on `ws-ops` — a personal workstation automation CLI
 > for a developer/CTO. The tool organizes email, digests dev feeds (GitLab, GitHub, Jira, Telegram),
 > and surfaces actionable intelligence using local or remote LLMs.
-> Read this document fully before writing any code.
+
+This file contains the **project identity** and **philosophy**. For technical conventions,
+architecture guidance, and implementation details, see **[docs/ai-agents.md](docs/ai-agents.md)**.
 
 ---
 

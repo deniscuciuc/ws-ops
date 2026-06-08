@@ -1,0 +1,59 @@
+# Dependabot config for ws-ops — an open-source Python dev tool
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # ── Python (PyPI) dependencies from pyproject.toml ───────────────
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Chisinau"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      # Dev tooling (lint, typecheck, testing)
+      dev-tools:
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "pyright"
+        update-types:
+          - "minor"
+          - "patch"
+      # Major runtime deps — version bumps need review
+      runtime-minor-patch:
+        patterns:
+          - "typer"
+          - "rich"
+          - "pydantic-settings"
+          - "jinja2"
+          - "pyyaml"
+          - "httpx"
+          - "platformdirs"
+          - "aiosqlite"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Python 3.12+ only; don't bump to a version that drops it
+      - dependency-name: "python"
+      # Very frequent releases; update only when needed manually
+      - dependency-name: "ruff"
+
+  # ── GitHub Actions ───────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Chisinau"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"

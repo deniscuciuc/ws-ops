@@ -124,17 +124,25 @@ class Database:
         await self._conn.commit()
 
     async def get_action_items(
-        self, status: str = "open"
+        self, status: str | None = "open"
     ) -> list[dict]:
         assert self._conn
-        cur = await self._conn.execute(
-            """SELECT ai.*, i.title AS item_title, i.source AS item_source
-               FROM action_items ai
-               LEFT JOIN items i ON i.id = ai.source_item_id
-               WHERE ai.status = ?
-               ORDER BY ai.created_at DESC""",
-            (status,),
-        )
+        if status is None:
+            cur = await self._conn.execute(
+                """SELECT ai.*, i.title AS item_title, i.source AS item_source
+                   FROM action_items ai
+                   LEFT JOIN items i ON i.id = ai.source_item_id
+                   ORDER BY ai.created_at DESC""",
+            )
+        else:
+            cur = await self._conn.execute(
+                """SELECT ai.*, i.title AS item_title, i.source AS item_source
+                   FROM action_items ai
+                   LEFT JOIN items i ON i.id = ai.source_item_id
+                   WHERE ai.status = ?
+                   ORDER BY ai.created_at DESC""",
+                (status,),
+            )
         rows = await cur.fetchall()
         return [dict(r) for r in rows]
 

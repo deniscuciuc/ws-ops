@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -16,11 +18,20 @@ from rich.table import Table
 from src.config import Config
 from src.db import Database
 from src.digest import (
+    DigestResult,
     format_digest_summary,
     format_digest_telegram,
     run_all,
 )
 from src.notify import Notifier
+from src.registry import SOURCE_REGISTRY
+from src.sources import (  # noqa: F401 — triggers source registrations
+    EmailSource,
+    GitHubSource,
+    GitLabSource,
+    JiraSource,
+    TelegramSource,
+)
 
 app = typer.Typer(name="ws-ops", help="Personal workstation automation.")
 console = Console()
@@ -31,12 +42,15 @@ async def _run_sources(
     config: Config,
     source_filter: list[str] | None = None,
     dry_run: bool = False,
-) -> None:
-    """Run sources and display results."""
+) -> DigestResult:
+    """Run sources, display results, and return DigestResult."""
     db = Database(config.db_path)
     await db.connect()
 
     try:
+        if source_filter:
+            config = _filter_sources(config, source_filter)
+
         result = await run_all(config, db)
 
         if result.total_errors:
@@ -56,17 +70,17 @@ async def _run_sources(
                 border_style="green" if result.high_priority_count == 0 else "yellow",
             )
         )
+
+        return result
     finally:
         await db.close()
 
 
 async def _notify_digest(
-    config: Config, result: object, digest_type: str = "morning"
+    config: Config, result: DigestResult, digest_type: str = "morning"
 ) -> None:
     """Send digest notification via Telegram."""
-    from src.digest import DigestResult
-
-    if config.telegram_bot and isinstance(result, DigestResult):
+    if config.telegram_bot:
         notifier = Notifier(config.telegram_bot)
         message = format_digest_telegram(result)
         await notifier.send_digest(
@@ -95,15 +109,13 @@ def morning(
     if dry_run:
         config.dry_run = True
 
-    if sources:
-        config = _filter_sources(config, sources)
-
     with console.status("[bold green]Running morning digest..."):
         result = asyncio.run(_run_sources(config, dry_run=dry_run))
 
-    if notify and config.telegram_bot:
+    if notify:
         asyncio.run(_notify_digest(config, result, "morning"))
-        console.print("[green]✓[/green] Telegram digest sent")
+        if config.telegram_bot:
+            console.print("[green]✓[/green] Telegram digest sent")
 
 
 @app.command()
@@ -118,15 +130,16 @@ def evening(
     with console.status("[bold blue]Running evening summary..."):
         result = asyncio.run(_run_sources(config))
 
-    if notify and config.telegram_bot:
+    if notify:
         asyncio.run(_notify_digest(config, result, "evening"))
-        console.print("[green]✓[/green] Telegram digest sent")
+        if config.telegram_bot:
+            console.print("[green]✓[/green] Telegram digest sent")
 
 
 @app.command()
 def run(
     source: str = typer.Argument(
-        ..., help="Source to run: email | gitlab | github | telegram | jira"
+        ..., help="Source to run: " + ", ".join(SOURCE_REGISTRY.all)
     ),
     dry_run: bool = typer.Option(False, "--dry-run"),  # noqa: B008
 ) -> None:
@@ -141,7 +154,7 @@ def run(
 @app.command()
 def actions(
     status: str = typer.Option(  # noqa: B008
-        "open", "--status", help="open | done | all"
+        "open", "--status", help="open | done | snoozed | all"
     ),
 ) -> None:
     """Show action items from the database."""
@@ -151,9 +164,7 @@ def actions(
     async def _show_actions() -> None:
         await db.connect()
         try:
-            items = await db.get_action_items(
-                status if status != "all" else "open"
-            )
+            items = await db.get_action_items(status if status != "all" else None)
         except Exception:
             items = []
 
@@ -187,55 +198,20 @@ def config_check() -> None:
     """Validate config and test all source connections."""
     config = Config()
     console.print("[green]✓[/green] Config loaded successfully")
-
     checks: list[tuple[str, bool, str]] = []
+
+    # LLM
     checks.append(("LLM", True, f"Provider: {config.llm.provider}"))
 
-    checks.append(
-        (
-            "Email",
-            len(config.email_accounts) > 0,
-            f"{len(config.email_accounts)} account(s) configured"
-            if config.email_accounts
-            else "none",
-        )
-    )
-    checks.append(
-        (
-            "GitLab",
-            len(config.gitlab_instances) > 0,
-            f"{len(config.gitlab_instances)} instance(s)"
-            if config.gitlab_instances
-            else "none",
-        )
-    )
-    checks.append(
-        (
-            "GitHub",
-            len(config.github_accounts) > 0,
-            f"{len(config.github_accounts)} account(s)"
-            if config.github_accounts
-            else "none",
-        )
-    )
-    checks.append(
-        (
-            "Telegram",
-            len(config.telegram_accounts) > 0,
-            f"{len(config.telegram_accounts)} account(s)"
-            if config.telegram_accounts
-            else "none",
-        )
-    )
-    checks.append(
-        (
-            "Jira",
-            len(config.jira_instances) > 0,
-            f"{len(config.jira_instances)} instance(s)"
-            if config.jira_instances
-            else "none",
-        )
-    )
+    # Sources from registry
+    for name, entry in SOURCE_REGISTRY:
+        instances = getattr(config, entry.config_field, [])
+        if instances:
+            checks.append((name.capitalize(), True, f"{len(instances)} instance(s)"))
+        else:
+            checks.append((name.capitalize(), False, "none"))
+
+    # Telegram Bot
     checks.append(
         (
             "Telegram Bot",
@@ -244,19 +220,44 @@ def config_check() -> None:
         )
     )
 
-    table = Table(title="Configuration Check")
-    table.add_column("Source", style="cyan")
+    # Runtime checks
+    prompts_ok = Path(config.prompts_dir).expanduser().is_dir()
+    checks.append(
+        (
+            "Prompts",
+            prompts_ok,
+            config.prompts_dir if prompts_ok else "not found",
+        )
+    )
+
+    db_parent = Path(config.db_path).expanduser().parent
+    db_writable = db_parent.exists() or db_parent.mkdir(parents=True, exist_ok=True) or True
+    db_writable = db_parent.is_dir() and os.access(str(db_parent), os.W_OK)
+    checks.append(
+        (
+            "Database path",
+            db_writable,
+            config.db_path if db_writable else "not writable",
+        )
+    )
+
+    table = Table(title="System Readiness")
+    table.add_column("Component", style="cyan")
     table.add_column("Status")
     table.add_column("Details")
 
     for name, ok, detail in checks:
         table.add_row(
             name,
-            "[green]✓[/green]" if ok else "[yellow]–[/yellow]",
+            "[green]✓[/green]" if ok else "[red]✗[/red]",
             detail,
         )
 
     console.print(table)
+
+    if not prompts_ok:
+        console.print("\n[yellow]⚠  Prompt directory not found. Run from the project root "
+                      "or set WS_OPS_PROMPTS_DIR.[/yellow]")
 
 
 def _filter_sources(config: Config, source_names: list[str]) -> Config:
@@ -265,16 +266,9 @@ def _filter_sources(config: Config, source_names: list[str]) -> Config:
 
     filtered = deepcopy(config)
 
-    if "email" not in source_names:
-        filtered.email_accounts = []
-    if "gitlab" not in source_names:
-        filtered.gitlab_instances = []
-    if "github" not in source_names:
-        filtered.github_accounts = []
-    if "telegram" not in source_names:
-        filtered.telegram_accounts = []
-    if "jira" not in source_names:
-        filtered.jira_instances = []
+    for name, entry in SOURCE_REGISTRY:
+        if name not in source_names:
+            setattr(filtered, entry.config_field, [])
 
     return filtered
 

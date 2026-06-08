@@ -15,7 +15,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-import src.sources  # noqa: F401 — triggers source registrations
+import src.sources  # noqa: F401 — triggers source registrations  # pyright: ignore[reportUnusedImport]
 from src.config import Config
 from src.db import Database
 from src.digest import (

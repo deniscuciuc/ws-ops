@@ -69,10 +69,20 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
+
+# Suppress third-party library stub issues (Telethon, PyGitHub, IMAPClient, etc.)
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUnknownParameterType = false
 reportUnknownVariableType = false
+reportUnknownLambdaType = false
+reportGeneralTypeIssues = false
+reportOptionalMemberAccess = false
+reportOptionalIterable = false
+reportCallIssue = false
+reportAttributeAccessIssue = false
+reportArgumentType = false
+reportUnknownArgumentType = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

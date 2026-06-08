@@ -21,9 +21,8 @@ lint:              ## Lint with ruff
 lint-fix:          ## Auto-fix lint issues
 	uv run ruff check --fix
 
-typecheck:         ## Type check with pyright (strict mode, non-blocking)
-	@echo "=== pyright strict mode (remaining errors are third-party stubs) ==="
-	-uv run pyright 2>&1 | tail -5
+typecheck:         ## Type check with pyright (strict mode)
+	uv run pyright
 
 run:               ## Run ws-ops (pass args via ARGS, e.g. make run ARGS="morning --help")
 	uv run ws-ops $(ARGS)

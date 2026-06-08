@@ -36,7 +36,6 @@ jobs:
 
   type-check:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -46,12 +45,3 @@ jobs:
         run: uv sync --group dev
       - name: Pyright check
         run: uv run pyright
-      - name: Summarize
-        if: always()
-        run: |
-          echo "### Type check results" >> $GITHUB_STEP_SUMMARY
-          uv run pyright 2>&1 | grep -E '(error:|warning:)' | \
-            awk '{print $NF}' | sort | uniq -c | sort -rn | \
-            head -10 >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "*Note: Remaining errors are all from untyped third-party libraries.*" >> $GITHUB_STEP_SUMMARY

@@ -100,9 +100,8 @@ class TelegramSource(Source[TelegramAccountConfig]):
         return items
 
     async def classify(self, item: SourceItem) -> ClassifiedItem:
-        from src.prompt_manager import PromptManager
-
-        pm = PromptManager("./prompts")
+        assert self.prompt_manager is not None, "PromptManager required for classify"
+        pm = self.prompt_manager
         hours = 24
 
         user_msg = pm.render_user(

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 if TYPE_CHECKING:
     from src.db import Database
     from src.llm import LLMProvider
+    from src.prompt_manager import PromptManager
 
 
 @dataclass
@@ -67,6 +68,7 @@ class Source(ABC, Generic[SourceConfigT]):  # noqa: UP046
         config: SourceConfigT,
         llm: LLMProvider,
         db: Database,
+        prompt_manager: PromptManager | None = None,
         dry_run: bool = False,
     ) -> None:
         self.config = config
@@ -74,6 +76,7 @@ class Source(ABC, Generic[SourceConfigT]):  # noqa: UP046
         self.db = db
         self.dry_run = dry_run
         self.label = config.name if hasattr(config, "name") else config.__class__.__name__
+        self.prompt_manager = prompt_manager
 
     @property
     @abstractmethod
@@ -104,33 +107,34 @@ class Source(ABC, Generic[SourceConfigT]):  # noqa: UP046
 
         for item in items:
             try:
-                if await self.db.item_exists(item.id):
-                    continue  # already processed
+                if not self.dry_run and await self.db.item_exists(item.id):
+                    continue  # already processed (skip dedup check in dry-run)
 
                 c = await self.classify(item)
 
                 await self.act(c)
 
-                await self.db.insert_item(
-                    item_id=item.id,
-                    source=f"{self.source_name}:{self.label}",
-                    title=item.title,
-                    category=c.category,
-                    action=c.action,
-                    priority=c.priority,
-                    summary=c.summary,
-                    folder=c.folder,
-                    account=self.label,
-                    requires_response=c.requires_response,
-                    acted=not self.dry_run,
-                )
-
-                for ai_text in c.action_items:
-                    await self.db.upsert_action_item(
-                        source_item_id=item.id,
-                        text=ai_text,
+                if not self.dry_run:
+                    await self.db.insert_item(
+                        item_id=item.id,
                         source=f"{self.source_name}:{self.label}",
+                        title=item.title,
+                        category=c.category,
+                        action=c.action,
+                        priority=c.priority,
+                        summary=c.summary,
+                        folder=c.folder,
+                        account=self.label,
+                        requires_response=c.requires_response,
+                        acted=True,
                     )
+
+                    for ai_text in c.action_items:
+                        await self.db.upsert_action_item(
+                            source_item_id=item.id,
+                            text=ai_text,
+                            source=f"{self.source_name}:{self.label}",
+                        )
 
                 classified.append(c)
             except Exception as e:

@@ -138,9 +138,8 @@ class EmailSource(Source[EmailAccountConfig]):
         return items
 
     async def classify(self, item: SourceItem) -> ClassifiedItem:
-        from src.prompt_manager import PromptManager
-
-        pm = PromptManager("./prompts")
+        assert self.prompt_manager is not None, "PromptManager required for classify"
+        pm = self.prompt_manager
         folders_str = ", ".join(
             self.config.folders_map.values()
         ) or "inbox, archive, trash"

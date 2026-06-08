@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import aiosqlite
 
@@ -125,7 +126,7 @@ class Database:
 
     async def get_action_items(
         self, status: str | None = "open"
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         assert self._conn
         if status is None:
             cur = await self._conn.execute(

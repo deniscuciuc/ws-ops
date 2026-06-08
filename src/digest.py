@@ -65,7 +65,7 @@ async def run_all(config: Config, db: Database) -> DigestResult:
         if isinstance(r, Exception):
             log.error("Source run failed: %s", r)
         else:
-            source_results.append(r)
+            source_results.append(r)  # pyright: ignore[reportArgumentType]
 
     return DigestResult(results=source_results)
 

@@ -7,10 +7,6 @@ edits across digest.py and cli.py.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from src.sources.base import Source
 
 
 @dataclass
@@ -19,9 +15,10 @@ class SourceEntry:
 
     name: str
     config_field: str
-    source_class: type[Source]
+    source_class: type  # type[Source] — Generic Source prevents strict typing
 
 
+#: Global singleton — populated by src/sources/__init__.py on import.
 class SourceRegistry:
     """Registry of all available data source types."""
 
@@ -45,6 +42,8 @@ class SourceRegistry:
 SOURCE_REGISTRY = SourceRegistry()
 
 
-def register_source(name: str, config_field: str, source_class: type[Source]) -> None:
+def register_source(
+    name: str, config_field: str, source_class: type
+) -> None:
     """Register a source so digest.py and cli.py can discover it."""
     SOURCE_REGISTRY.register(SourceEntry(name, config_field, source_class))

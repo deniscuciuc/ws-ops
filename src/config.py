@@ -66,8 +66,9 @@ def _ensure_prompts(prompts_dir: str) -> str:
         if ilr.is_resource("src", "prompts"):
             # Copy each bundled prompt
             for f in ilr.files("src.prompts").iterdir():
-                if f.suffix == ".yaml":
-                    shutil.copy2(str(f), str(dest / f.name))
+                name = str(f.name)
+                if name.endswith(".yaml"):
+                    shutil.copy2(str(f), str(dest / name))
             return str(dest)
     except (ModuleNotFoundError, TypeError, FileNotFoundError):
         pass

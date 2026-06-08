@@ -15,6 +15,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+import src.sources  # noqa: F401 — triggers source registrations
 from src.config import Config
 from src.db import Database
 from src.digest import (
@@ -25,13 +26,6 @@ from src.digest import (
 )
 from src.notify import Notifier
 from src.registry import SOURCE_REGISTRY
-from src.sources import (  # noqa: F401 — triggers source registrations
-    EmailSource,
-    GitHubSource,
-    GitLabSource,
-    JiraSource,
-    TelegramSource,
-)
 
 app = typer.Typer(name="ws-ops", help="Personal workstation automation.")
 console = Console()

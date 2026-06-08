@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml
 from jinja2 import Template
@@ -18,7 +19,7 @@ class Prompt:
     version: str
     system: str
     user_template: str
-    output_schema: dict
+    output_schema: dict[str, Any]
 
 
 class PromptManager:
@@ -36,15 +37,16 @@ class PromptManager:
                 raise FileNotFoundError(
                     f"Prompt '{name}' not found at {path}"
                 )
-            data = yaml.safe_load(path.read_text())
-            if not isinstance(data, dict):
+            raw = yaml.safe_load(path.read_text())
+            if not isinstance(raw, dict):
                 raise ValueError(f"Invalid prompt file: {path}")
+            raw_data: dict[str, Any] = raw
             self._cache[name] = Prompt(
-                name=data["name"],
-                version=data["version"],
-                system=data["system"],
-                user_template=data["user"],
-                output_schema=data.get("output_schema", {}),
+                name=str(raw_data["name"]),
+                version=str(raw_data["version"]),
+                system=str(raw_data["system"]),
+                user_template=str(raw_data["user"]),
+                output_schema=dict(raw_data.get("output_schema", {})),
             )
         return self._cache[name]
 

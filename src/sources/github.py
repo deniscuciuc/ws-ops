@@ -36,7 +36,7 @@ class GitHubSource(Source[GitHubAccountConfig]):
             log.error("GitHub auth failed for %s: %s", config.name, e)
             return items
 
-        repos_to_check: list = []
+        repos_to_check: list[object] = []
 
         # Orgs configured
         for org_name in config.orgs:

@@ -31,7 +31,7 @@ ACTION_MAP = {
 }
 
 
-def _decode_header_value(value: bytes | str | None) -> str:
+def decode_header_value(value: bytes | str | None) -> str:
     if value is None:
         return ""
     if isinstance(value, bytes):
@@ -49,7 +49,7 @@ def _decode_header_value(value: bytes | str | None) -> str:
     return " ".join(parts)
 
 
-def _parse_date(date_str: str | None) -> datetime:
+def parse_email_date(date_str: str | None) -> datetime:
     if date_str:
         try:
             dt = parsedate_to_datetime(date_str)
@@ -84,7 +84,7 @@ class EmailSource(Source[EmailAccountConfig]):
 
         try:
             server.select_folder("INBOX")
-            messages = server.search(["UNSEEN"])
+            messages = server.search("UNSEEN")
             if not messages:
                 return items
 
@@ -108,10 +108,10 @@ class EmailSource(Source[EmailAccountConfig]):
                     if not msg_id:
                         msg_id = f"email:{config.name}:{uid}"
 
-                    subject = _decode_header_value(msg.get("Subject", ""))
-                    sender = _decode_header_value(msg.get("From", ""))
+                    subject = decode_header_value(msg.get("Subject", ""))
+                    sender = decode_header_value(msg.get("From", ""))
                     date_str = msg.get("Date")
-                    date = _parse_date(date_str)
+                    date = parse_email_date(date_str)
 
                     body = _extract_text_body(msg)
 

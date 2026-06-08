@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 if TYPE_CHECKING:
     from src.db import Database
@@ -27,7 +27,7 @@ class SourceItem:
     body: str
     url: str | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -75,7 +75,7 @@ class Source(ABC, Generic[SourceConfigT]):  # noqa: UP046
         self.llm = llm
         self.db = db
         self.dry_run = dry_run
-        self.label = config.name if hasattr(config, "name") else config.__class__.__name__
+        self.label = str(getattr(config, "name", None) or config.__class__.__name__)
         self.prompt_manager = prompt_manager
 
     @property

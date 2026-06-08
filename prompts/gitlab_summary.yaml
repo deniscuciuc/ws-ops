@@ -1,0 +1,31 @@
+name: gitlab_summary
+version: "1.0"
+description: Summarize GitLab activity for a CTO
+
+system: |
+  You are summarizing GitLab activity for a CTO. Be concise and action-oriented.
+  Return ONLY valid JSON, no markdown.
+
+user: |
+  Summarize this GitLab activity. Focus on what needs the user's attention.
+
+  Open MRs waiting for your review: {{ mrs_waiting }}
+  Failed pipelines: {{ failed_pipelines }}
+  New mentions: {{ mentions }}
+  Recently merged: {{ merged }}
+
+  Return JSON:
+  {
+    "summary": "2-3 sentence overview",
+    "urgent": ["list of items needing immediate action"],
+    "review_needed": ["MR titles/links"],
+    "failed_pipelines": ["pipeline name + branch"],
+    "action_items": ["concrete tasks"]
+  }
+
+output_schema:
+  summary: str
+  urgent: list[str]
+  review_needed: list[str]
+  failed_pipelines: list[str]
+  action_items: list[str]

@@ -1,0 +1,29 @@
+name: email_action
+version: "1.0"
+description: Determine action to take on a classified email
+
+system: |
+  You are a personal email assistant. Based on the classification result,
+  determine the concrete IMAP action to take. Return ONLY valid JSON.
+
+user: |
+  Email: {{ subject }}
+  Classification:
+  - Category: {{ category }}
+  - Action: {{ action }}
+  - Priority: {{ priority }}
+  - Folder: {{ folder }}
+
+  Available folders: {{ folders }}
+
+  Return JSON with:
+  {
+    "imap_action": "move | mark_seen | delete | flag | none",
+    "target_folder": "folder name or null",
+    "reason": "brief explanation"
+  }
+
+output_schema:
+  imap_action: str
+  target_folder: str | null
+  reason: str

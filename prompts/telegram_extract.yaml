@@ -1,0 +1,27 @@
+name: telegram_extract
+version: "1.0"
+description: Extract action items from Telegram messages
+
+system: |
+  You are analyzing Telegram work chat messages for a CTO.
+  Extract action items, decisions, and important mentions.
+  Return ONLY valid JSON.
+
+user: |
+  Chat: {{ chat_name }}
+  Messages from last {{ hours }} hours:
+  {{ messages }}
+
+  Return JSON:
+  {
+    "action_items": ["tasks explicitly or implicitly assigned to the user"],
+    "decisions_made": ["important decisions recorded in chat"],
+    "mentions": ["messages where user was mentioned"],
+    "summary": "one paragraph overview of what happened"
+  }
+
+output_schema:
+  action_items: list[str]
+  decisions_made: list[str]
+  mentions: list[str]
+  summary: str

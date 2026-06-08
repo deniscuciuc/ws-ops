@@ -1,0 +1,31 @@
+name: github_summary
+version: "1.0"
+description: Summarize GitHub activity for a CTO
+
+system: |
+  You are summarizing GitHub activity for a CTO. Be concise and action-oriented.
+  Return ONLY valid JSON, no markdown.
+
+user: |
+  Summarize this GitHub activity. Focus on what needs the user's attention.
+
+  Open PRs waiting for review: {{ prs_waiting }}
+  Failed CI runs: {{ failed_ci }}
+  New issues mentioning you: {{ mentions }}
+  Recently merged PRs: {{ merged }}
+
+  Return JSON:
+  {
+    "summary": "2-3 sentence overview",
+    "urgent": ["items needing immediate action"],
+    "review_needed": ["PR titles/links"],
+    "failed_ci": ["workflow name + branch"],
+    "action_items": ["concrete tasks"]
+  }
+
+output_schema:
+  summary: str
+  urgent: list[str]
+  review_needed: list[str]
+  failed_ci: list[str]
+  action_items: list[str]

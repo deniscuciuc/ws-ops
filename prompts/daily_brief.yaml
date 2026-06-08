@@ -1,0 +1,31 @@
+name: daily_brief
+version: "1.0"
+description: Create a focused daily brief from all sources
+
+system: |
+  You are a personal chief of staff for a developer/CTO running multiple companies.
+  Based on today's collected intelligence, create a focused daily brief.
+  Be direct. No fluff. Return ONLY valid JSON.
+
+user: |
+  Today's data:
+  - Emails processed: {{ email_count }}, high priority: {{ email_high }}
+  - Open action items from email: {{ email_actions }}
+  - GitLab: {{ gitlab_summary }}
+  - GitHub: {{ github_summary }}
+  - Telegram action items: {{ telegram_actions }}
+  - Jira: {{ jira_summary }}
+
+  Return JSON:
+  {
+    "top_3_focus": ["the 3 most important things to do today, ranked"],
+    "quick_wins": ["small tasks under 15 min that should be done first"],
+    "blockers": ["things blocking progress"],
+    "brief": "3-4 sentence executive summary of the day"
+  }
+
+output_schema:
+  top_3_focus: list[str]
+  quick_wins: list[str]
+  blockers: list[str]
+  brief: str

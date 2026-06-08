@@ -1,0 +1,28 @@
+name: jira_summary
+version: "1.0"
+description: Summarize Jira activity for a CTO
+
+system: |
+  You are summarizing Jira activity for a CTO. Be concise and action-oriented.
+  Return ONLY valid JSON, no markdown.
+
+user: |
+  Summarize this Jira activity. Focus on what needs the user's attention.
+
+  Assigned issues: {{ assigned }}
+  Sprint progress: {{ sprint }}
+  Recently updated: {{ updated }}
+
+  Return JSON:
+  {
+    "summary": "2-3 sentence overview",
+    "blockers": ["issues blocking progress"],
+    "due_soon": ["issues due within 3 days"],
+    "action_items": ["concrete tasks"]
+  }
+
+output_schema:
+  summary: str
+  blockers: list[str]
+  due_soon: list[str]
+  action_items: list[str]

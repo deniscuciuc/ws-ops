@@ -52,7 +52,9 @@ WS_OPS_GITHUB_ACCOUNTS='[{"name": "personal", "token": "ghp_...", ...}]'
 WS_OPS_TELEGRAM_ACCOUNTS='[{"name": "personal", "api_id": 12345, ...}]'
 ```
 
-First run triggers interactive phone + code authentication. Session saved to `session_file`.
+Normal digest runs stay non-interactive. Provide either a saved `session_file`,
+or a `session_string`, or run `ws-ops telegram-login <account>` once to create the
+session file.
 
 ### Jira
 

@@ -50,6 +50,9 @@ ws-ops actions
 
 # Validate config and test connections
 ws-ops config-check
+
+# Authenticate Telegram once for a source account
+ws-ops telegram-login personal
 ```
 
 ### Shell alias
@@ -83,6 +86,18 @@ $EDITOR ~/.config/ws-ops/.env
 ws-ops config-check
 ```
 
+To rebuild and reinstall the globally installed CLI from a local checkout:
+
+```bash
+make reinstall-global
+```
+
+For local development without reinstalling after each change:
+
+```bash
+make install-global-editable
+```
+
 ### From source (development)
 
 ```bash
@@ -98,8 +113,9 @@ uv run ws-ops config-check
 
 1. Configure at least one source in `.env` (place in `~/.config/ws-ops/` for global install, or `$PWD/.env` for local dev)
 2. Run `ws-ops config-check` to verify all connections
-3. Run `ws-ops morning` for your first digest
-4. Set up the Telegram bot for push notifications (optional)
+3. If you enabled the Telegram source, run `ws-ops telegram-login <account>` once
+4. Run `ws-ops morning` for your first digest
+5. Set up the Telegram bot for push notifications (optional)
 
 > **Path resolution**: `ws-ops` uses [`platformdirs`](https://github.com/platformdirs/platformdirs) for cross-platform defaults.
 > On Linux, config lives in `~/.config/ws-ops/` and data in `~/.local/share/ws-ops/`.
@@ -202,4 +218,3 @@ Contributions are welcome! Here's how to add a new data source:
 ## License
 
 MIT — see [LICENSE](LICENSE).
-

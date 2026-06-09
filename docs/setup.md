@@ -32,6 +32,12 @@ uv run ws-ops config-check
 # From a local clone
 uv tool install .
 
+# Rebuild and reinstall from the local checkout
+make reinstall-global
+
+# Or install editable for local development
+make install-global-editable
+
 # Or direct from Git
 uv tool install git+https://github.com/yourname/ws-ops.git
 

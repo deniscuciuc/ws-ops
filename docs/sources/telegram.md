@@ -11,14 +11,22 @@ Uses the user's own Telegram account — can read any chat the user can see.
 4. Classifies with LLM to extract action items, decisions, and mentions
 5. Stores extracted items in the database
 
-## First Run
+## Authentication
 
-The first connection requires interactive authentication:
+Regular digest runs do not prompt for Telegram credentials. Authenticate once with:
+```bash
+ws-ops telegram-login personal
+```
+
+That one-time login uses the configured `session_file` path and stores the saved session there.
+
+During the interactive login, Telethon asks for:
 ```
 Enter your phone number: +1234567890
 Enter the code: 12345
 ```
-The session is saved to `session_file` for re-use.
+
+If you prefer env-only setup, provide `session_string` instead of `session_file`.
 
 ## Privacy
 
@@ -34,6 +42,7 @@ WS_OPS_TELEGRAM_ACCOUNTS='[{
   "api_id": 12345678,
   "api_hash": "abc...",
   "session_file": null,
+  "session_string": null,
   "watch_chats": ["team_chat", -1001234567890],
   "fetch_dms": false,
   "unread_only": true,

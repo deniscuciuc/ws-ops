@@ -140,6 +140,7 @@ class TelegramAccountConfig(BaseSettings):
     api_id: int
     api_hash: SecretStr
     session_file: str | None = None
+    session_string: SecretStr | None = None
     watch_chats: list[str | int] = Field(default_factory=list)
     fetch_groups: bool = True
     fetch_channels: bool = True

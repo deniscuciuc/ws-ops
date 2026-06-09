@@ -26,6 +26,7 @@ from src.digest import (
 )
 from src.notify import Notifier
 from src.registry import SOURCE_REGISTRY
+from src.sources.telegram import create_telegram_client, resolve_telegram_session_file
 
 app = typer.Typer(name="ws-ops", help="Personal workstation automation.")
 console = Console()
@@ -86,6 +87,27 @@ async def _notify_digest(
         )
 
 
+async def _login_telegram_account(account_name: str) -> str | None:
+    """Perform the one-time interactive Telegram login for a configured account."""
+    config = Config()
+    account = next((acc for acc in config.telegram_accounts if acc.name == account_name), None)
+    if account is None:
+        raise ValueError(f"Telegram account '{account_name}' is not configured.")
+
+    if account.session_string:
+        return None
+
+    client = create_telegram_client(account)
+    try:
+        await client.start()
+        if not await client.is_user_authorized():
+            raise RuntimeError(f"Telegram login did not complete for '{account_name}'.")
+    finally:
+        await client.disconnect()
+
+    return resolve_telegram_session_file(account)
+
+
 @app.command()
 def morning(
     sources: list[str] = typer.Option(  # noqa: B008
@@ -143,6 +165,26 @@ def run(
         config.dry_run = True
 
     asyncio.run(_run_sources(config, source_filter=[source]))
+
+
+@app.command("telegram-login")
+def telegram_login(
+    account: str = typer.Argument(..., help="Telegram account name from config"),
+) -> None:
+    """Authenticate a Telegram source account and save its session for later runs."""
+    try:
+        session_file = asyncio.run(_login_telegram_account(account))
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    if session_file is None:
+        console.print(
+            "[yellow]Telegram account uses session_string; "
+            "interactive login is not needed.[/yellow]"
+        )
+        return
+
+    console.print(f"[green]✓[/green] Telegram session saved to {session_file}")
 
 
 @app.command()

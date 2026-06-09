@@ -22,6 +22,7 @@ def test_cli_help_succeeds() -> None:
     assert "run" in result.output
     assert "actions" in result.output
     assert "config-check" in result.output
+    assert "telegram-login" in result.output
 
 
 def test_config_check_no_env(tmp_path: Path) -> None:

@@ -1,7 +1,7 @@
 # ws-ops — common commands
 # First run: `uv sync` to create the virtualenv.
 
-.PHONY: install install-global test test-file lint lint-fix typecheck run help clean
+.PHONY: install install-global reinstall-global install-global-editable test test-file lint lint-fix typecheck run help clean
 
 install:           ## Install dev dependencies and package
 	uv sync
@@ -9,10 +9,16 @@ install:           ## Install dev dependencies and package
 install-global:    ## Install as a global CLI tool
 	uv tool install .
 
+reinstall-global:  ## Rebuild and reinstall the global CLI tool from the local checkout
+	uv tool install --reinstall .
+
+install-global-editable: ## Install global CLI tool in editable mode for local development
+	uv tool install --editable .
+
 test:              ## Run all tests
 	uv run pytest
 
-test-file f=%:     ## Run tests in a specific file (make test-file f=tests/test_cli.py)
+test-file:         ## Run tests in a specific file (make test-file f=tests/test_cli.py)
 	uv run pytest $(f) -v
 
 lint:              ## Lint with ruff

@@ -12,12 +12,34 @@ from pathlib import Path
 import platformdirs
 from telethon import TelegramClient
 from telethon.errors import RPCError
+from telethon.sessions import StringSession
 
 from src.config import TelegramAccountConfig
 
 from .base import ClassifiedItem, Source, SourceItem
 
 log = logging.getLogger(__name__)
+
+
+def resolve_telegram_session_file(config: TelegramAccountConfig) -> str:
+    """Return session_file from config or generate a default in the data dir."""
+    if config.session_file:
+        return str(Path(config.session_file).expanduser().resolve())
+    data_dir = Path(platformdirs.user_data_dir("ws-ops", ensure_exists=True))
+    return str(data_dir / f"tg_{config.name}.session")
+
+
+def create_telegram_client(config: TelegramAccountConfig) -> TelegramClient:
+    """Create a Telegram client from either a saved session string or session file."""
+    session: str | StringSession = resolve_telegram_session_file(config)
+    if config.session_string:
+        session = StringSession(config.session_string.get_secret_value())
+
+    return TelegramClient(
+        session=session,
+        api_id=config.api_id,
+        api_hash=config.api_hash.get_secret_value(),
+    )
 
 
 class TelegramSource(Source[TelegramAccountConfig]):
@@ -27,30 +49,28 @@ class TelegramSource(Source[TelegramAccountConfig]):
     def source_name(self) -> str:
         return "telegram"
 
-    def _resolve_session_file(self) -> str:
-        """Return session_file from config or generate a default in the data dir."""
-        if self.config.session_file:
-            return str(Path(self.config.session_file).expanduser().resolve())
-        data_dir = Path(platformdirs.user_data_dir("ws-ops", ensure_exists=True))
-        return str(data_dir / f"tg_{self.config.name}.session")
-
     async def fetch(self) -> list[SourceItem]:
         items: list[SourceItem] = []
         config = self.config
 
-        client = TelegramClient(
-            session=self._resolve_session_file(),
-            api_id=config.api_id,
-            api_hash=config.api_hash.get_secret_value(),
-        )
+        client = create_telegram_client(config)
 
         try:
-            await client.start()
+            await client.connect()
         except Exception as e:
-            log.error("Telegram auth failed for %s: %s", config.name, e)
+            log.error("Telegram connection failed for %s: %s", config.name, e)
             return items
 
         try:
+            if not await client.is_user_authorized():
+                log.error(
+                    "Telegram auth required for %s: no saved session found. "
+                    "Run `ws-ops telegram-login %s` once or configure session_string.",
+                    config.name,
+                    config.name,
+                )
+                return items
+
             dialogs = await client.get_dialogs()
             watch_chats = [str(c) for c in config.watch_chats]
 
